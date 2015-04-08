@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+penalties = dict(
+    add=-1,
+    delete=-1,
+    inplace=3,
+    move=2
+)
+
 def edit_distance(base, subject):
     """
     Sequence of edits needed to transform the subject into the base
@@ -40,11 +47,15 @@ def edit_distance(base, subject):
         for position in positions:
             deletions.append((position, ch))
 
+    rank = 0
     for verb, iterator in grammar.items():
+        penalty = penalties.get(verb, -1)
+        rank += (penalty * len(iterator))
         for it in iterator:
             print(verb, *it)
 
-    print('*')
+    print('*\nrank ', rank)
+    return rank
 
 def main():
     pairs = [

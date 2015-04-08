@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
+DEBUG = False
 penalties = dict(
     add=-1,
     delete=-1,
-    inplace=3,
+    keep=3,
     move=2
 )
 
@@ -48,25 +49,31 @@ def edit_distance(base, subject):
             deletions.append((position, ch))
 
     rank = 0
+
     for verb, iterator in grammar.items():
         penalty = penalties.get(verb, -1)
         rank += (penalty * len(iterator))
-        for it in iterator:
-            print(verb, *it)
 
-    print('*\nrank ', rank)
+        if DEBUG: # 
+            for it in iterator:
+                print(verb, *it)
+
+    if DEBUG:
+        print('*\nrank ', rank)
+
     return rank
 
 def main():
     pairs = [
             ('emmanuel', 'emmaneul',),
+            ('emmanuel', 'emmanuel',),
             ('google', 'googre',),
             ('apple', 'arpre',),
             ('github', 'bituhbslong',),
     ]
 
     for pair in pairs:
-        edit_distance(*pair)
+        print(pair, edit_distance(*pair))
 
 if __name__ == '__main__':
     main()

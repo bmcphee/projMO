@@ -128,7 +128,7 @@ class Application(Frame):
 				
 		for rating, suggestion in suggestions:
 			self.similar_list.insert(END, suggestion)
-			self.similar_rating.insert(END, rating)
+			self.similar_rating.insert(END, str(int(rating * 100) + '%')
 	
 	def get_matches(self, query, fuzziness=0.65):
 		if fuzziness == self.__last_used_fuzziness:

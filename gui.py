@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import time
+
 from tkinter import (
 	Tk, W, Entry,
 	Label, Button,
@@ -9,6 +11,8 @@ from tkinter import (
 import os
 
 from predict import utils, constants
+
+IgnoreShortTimeDeltas = False
 
 class Application(Frame):
 	
@@ -21,6 +25,12 @@ class Application(Frame):
 		self.__memoized_matches 	= {}
 		self.__last_used_fuzziness 	= -1
 		self.__index_path  = os.path.join('predict', constants.DEFAULT_DICT_FILE)
+
+		self.__prev_entry = ''
+		self.__prev_tick = self.__cur_tick = 0
+
+		# Rev it up.
+		self.load_index(self.__index_path)
 
 	def createWidgets(self):
 		"""
@@ -41,7 +51,8 @@ class Application(Frame):
 
 		# entry box
 		self.entry = Entry(self)
-		self.entry.bind('<Key>', self.callback)
+		self.entry.bind('<Key>', self.on_entry_change)
+		self.entry.bind('<KeyRelease>', self.on_entry_change)
 		self.entry.grid(row = 1, column = 0, columnspan = 2, sticky = W)
 
 		# list for similar words
@@ -57,7 +68,7 @@ class Application(Frame):
 	def load_index(self, index_path):
 		mem_index = self.__index_cache.get(index_path, None)
 		if not mem_index:
-			mem_index = utils.read_dict(index_path)
+			mem_index = utils.read_and_index(index_path)
 			self.__index_cache[index_path] = mem_index
 
 		return mem_index
@@ -74,40 +85,50 @@ class Application(Frame):
 		previously.
 		"""
 		self.no_match.grid_remove()
-		
-	def new_entry(self):
+
+	def on_entry_change(self, event):
 		"""
-		When the submit button is pressed the lists clear themselves in
-		preparation for new predicted words. 
+		When the submit button is pressed the lists clear
+	    themselves in preparation for new predicted words. 
 		"""
-		# gets the new entry and finds the closest matches to the word
 		new_entry = self.entry.get()
 
-		suggestions = self.get_matches(new_entry)
-		if not suggestions:
-			return
-	
-		# deletes current entries in the lists
-		self.similar_list.delete(0, END)
-		self.similar_rating.delete(0, END)
+		'''
+		if IgnoreShortTimeDeltas:
+			self.__prev_tick = self.__cur_tick
+			self.__cur_tick  = time.clock()
 
+			time_delta = self.__cur_tick - self.__prev_tick
+
+			print('time_delta', time_delta, self.__prev_tick, self.__cur_tick)
+			if time_delta < 0.04: # TODO: Determine a good difference
+
+				if len(self.__prev_entry) >= len(new_entry): # Backspace not hit
+					self.__prev_entry = new_entry
+					return
+
+			self.__prev_entry = new_entry
+		'''
+	
+	    # Gets rid of the error message if it is on the screen
+		self.clear_no_matches()
+
+		suggestions = self.get_matches(new_entry)
+	
 		# function call to get the list of suggested words and ratings
 		# display the similar words using
 		if not any(suggestions):
 			# If there are no matches display an error
-			self.no_matches()
-		
-		else:
-			# Gets rid of the error message if it is on the screen
-			self.clear_no_matches()
-			
-			for rating, suggestion in suggestions:
-				self.similar_list.insert(END, suggestion)
-				self.similar_rating.insert(END, rating)
+			return self.no_matches()
 
-	def callback(self, event):
-		self.new_entry()
-
+		# deletes current entries in the lists
+		self.similar_list.delete(0, END)
+		self.similar_rating.delete(0, END)
+				
+		for rating, suggestion in suggestions:
+			self.similar_list.insert(END, suggestion)
+			self.similar_rating.insert(END, rating)
+	
 	def get_matches(self, query, fuzziness=0.65):
 		if fuzziness != self.__last_used_fuzziness:
 			# Cache clean out

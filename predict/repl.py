@@ -46,7 +46,7 @@ def main():
     default_fuzziness = args.fuzziness
     default_dict      = args.dict
 
-    index = utils.read_dict(default_dict)
+    index = utils.read_and_index(default_dict)
 
     reading = True
     while reading:
@@ -66,7 +66,7 @@ def main():
                 fuzziness = float(rest[0])
                 rest_len = len(rest)
                 if rest_len >= 2:
-                    cur_dict = read_dict(rest[1])
+                    cur_dict = read_and_index(rest[1])
 
             matches = utils.find_matches(query, fuzziness, cur_dict)
 

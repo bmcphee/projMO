@@ -43,11 +43,11 @@ class Application(Frame):
 
 		# label for Suggested Words
 		self.title_list = Label(self, text = "Suggested Words:")
-		self.title_list.grid(row = 3, column = 0, columnspan = 2, sticky = W)
+		self.title_list.grid(row = 4, column = 0, columnspan = 2, sticky = W)
 
 		# label for Similarity
 		self.title_rating = Label(self, text = "Similarity:")
-		self.title_rating.grid(row = 3, column = 1, columnspan = 2, sticky = W)
+		self.title_rating.grid(row = 4, column = 1, columnspan = 2, sticky = W)
 
 		# entry box
 		self.entry = Entry(self)
@@ -57,11 +57,12 @@ class Application(Frame):
 
 		# list for similar words
 		self.similar_list = Listbox(self, width = 15, height = 15)
-		self.similar_list.grid(row = 4, column = 0, sticky = W)
+		self.similar_list.grid(row = 5, column = 0, sticky = W)
 
 		# list for ratings of words
 		self.similar_rating = Listbox(self, width = 8, height = 15)
-		self.similar_rating.grid(row = 4, column = 1, sticky = W)
+		self.similar_rating.grid(row = 5, column = 1, sticky = W)
+		
 		# label for the no matches error
 		self.no_match = Label(self, text = 'No matches.')
 		self.clear_no_matches()
@@ -78,7 +79,7 @@ class Application(Frame):
 		"""
 		If there are no matches it will display an error
 		"""
-		self.no_match.grid(row = 2, column = 1, sticky = W)
+		self.no_match.grid(row = 3, column = 0, sticky = W)
 	
 	def clear_no_matches(self):
 		"""
@@ -111,15 +112,20 @@ class Application(Frame):
 			self.__prev_entry = new_entry
 		'''
 	
-	    # Gets rid of the error message if it is on the screen
-		self.clear_no_matches()
 
-		suggestions = self.get_matches(new_entry)
-	
-		# function call to get the list of suggested words and ratings
-		# display the similar words using
+		# If the entry box is non empty it generates suggestions
+		if len(new_entry):
+			suggestions = self.get_matches(new_entry)
+			self.clear_no_matches()
+		
+		# If the entry box is empty it clears the list and doesn't generate suggestions
+		if not len(new_entry):
+			suggestions = {}
+			self.similar_list.delete(0, END)
+			self.similar_rating.delete(0, END)
+			
+		# If there are no matches display an error
 		if not any(suggestions):
-			# If there are no matches display an error
 			return self.no_matches()
 
 		# deletes current entries in the lists

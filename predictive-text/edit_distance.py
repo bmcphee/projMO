@@ -64,7 +64,11 @@ def edit_distance(base, subject):
     return rank
 
 def main():
+    global DEBUG
+    DEBUG = True
+
     pairs = [
+            ('brennan', 'bnrnane',),
             ('emmanuel', 'emmaneul',),
             ('emmanuel', 'emmanuel',),
             ('google', 'googre',),

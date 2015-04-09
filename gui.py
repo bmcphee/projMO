@@ -38,6 +38,8 @@ class Application(Frame):
 		# list for ratings of words
 		self.similar_rating = Listbox(self, width = 8, height = 15)
 		self.similar_rating.grid(row = 4, column = 1, sticky = W)
+		# label for the no matches error
+		self.no_match = Label(self, text = 'No matches.')
 
 	def load_index(self, index_path):
 		mem_index = self.__index_cache.get(index_path, None)
@@ -46,6 +48,19 @@ class Application(Frame):
 			self.__index_cache[index_path] = mem_index
 
 		return mem_index
+	
+	def no_matches(self):
+		"""
+		If there are no matches it will display an error
+		"""
+		self.no_match.grid(row = 2, column = 1, sticky = W)
+	
+	def clear_no_matches(self):
+		"""
+		If there are matches it clears the error message if there was one
+		previously.
+		"""
+		self.no_match.grid_remove()
 		
 	def new_entry(self):
 		"""
@@ -64,9 +79,13 @@ class Application(Frame):
 		# function call to get the list of suggested words and ratings
 		# display the similar words using
 		if not any(suggestions):
-			self.similar_list.insert(END, 'No matches.')
+			# If there are no matches display an error
+			self.no_matches()
 		
 		else:
+			# Gets rid of the error message if it is on the screen
+			self.clear_no_matches()
+			
 			for rating, suggestion in suggestions:
 				self.similar_list.insert(END, suggestion)
 				self.similar_rating.insert(END, rating)

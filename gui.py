@@ -63,9 +63,13 @@ class Application(Frame):
 		suggestions = self.get_matches(new_entry)
 		# function call to get the list of suggested words and ratings
 		# display the similar words using
-		for rating, suggestion in suggestions:
-			self.similar_list.insert(END, suggestion)
-			self.similar_rating.insert(END, rating)
+		if not any(suggestions):
+			self.similar_list.insert(END, 'No matches.')
+		
+		else:
+			for rating, suggestion in suggestions:
+				self.similar_list.insert(END, suggestion)
+				self.similar_rating.insert(END, rating)
 
 	def get_matches(self, query, fuzziness=0.65):
 		return utils.find_matches(query, fuzziness, self.load_index(self.__index_path))

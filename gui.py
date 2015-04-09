@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 
 from tkinter import (
-    Tk, W, Entry,
-    Label, Button,
-    Frame, END, Listbox,
+	Tk, W, Entry,
+	Label, Button,
+	Frame, END, Listbox,
 )
+
+import os
+
+from predict import utils, constants
 
 class Application(Frame):
 
@@ -34,6 +38,14 @@ class Application(Frame):
 		# list for ratings of words
 		self.similar_rating = Listbox(self, width = 8, height = 15)
 		self.similar_rating.grid(row = 4, column = 1, sticky = W)
+
+	def load_index(self, index_path):
+		mem_index = self.__index_cache.get(index_path, None)
+		if not mem_index:
+			mem_index = utils.read_dict(index_path)
+			self.__index_cache[index_path] = mem_index
+
+		return mem_index
 		
 	def new_entry(self):
 		"""
@@ -47,19 +59,29 @@ class Application(Frame):
 		
 		# gets the new entry and finds the closest matches to the word
 		new_entry = self.entry.get()
+
+		suggestions = self.get_matches(new_entry)
 		# function call to get the list of suggested words and ratings
 		# display the similar words using
-		# for words in word_list:
-		#	self.similar_list.insert(END, suggested_word)
-		# for rating in rating_list:
-		#	self.similar_rating.insert(END, rating)
+		for rating, suggestion in suggestions:
+			self.similar_list.insert(END, suggestion)
+			self.similar_rating.insert(END, rating)
+
+	def get_matches(self, query, fuzziness=0.65):
+		return utils.find_matches(query, fuzziness, self.load_index(self.__index_path))
 		
 	def __init__(self, master=None):
 		Frame.__init__(self, master)
 		self.grid()
 		self.createWidgets()
 
-root = Tk()
-app = Application(master=root)
-app.mainloop()
-root.destroy()
+		self.__index_cache = {}
+		self.__index_path  = os.path.join('predict', constants.DEFAULT_DICT_FILE)
+
+def main():
+	root = Tk()
+	app = Application(master=root)
+	app.mainloop()
+
+if __name__ == '__main__':
+	main()

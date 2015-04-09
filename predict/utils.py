@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
 # Local module
-from edit_distance import  edit_distance
+try:
+    from .edit_distance import  edit_distance
+except:
+    from edit_distance import  edit_distance
 
 max_rank_cache = {}
 
@@ -39,6 +42,5 @@ def find_matches(query, fuzziness, index):
         if percent >= fuzziness:
             matches.append((percent, item))
 
-    matches.sort(key=lambda a: a[0])
-    return [item[1] for item in matches]
-
+    matches.sort(key=lambda a: a[0], reverse=True)
+    return matches

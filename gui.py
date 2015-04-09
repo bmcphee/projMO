@@ -64,6 +64,7 @@ class Application(Frame):
 		self.similar_rating.grid(row = 4, column = 1, sticky = W)
 		# label for the no matches error
 		self.no_match = Label(self, text = 'No matches.')
+		self.clear_no_matches()
 
 	def load_index(self, index_path):
 		mem_index = self.__index_cache.get(index_path, None)
@@ -130,15 +131,15 @@ class Application(Frame):
 			self.similar_rating.insert(END, rating)
 	
 	def get_matches(self, query, fuzziness=0.65):
-		if fuzziness != self.__last_used_fuzziness:
+		if fuzziness == self.__last_used_fuzziness:
+			mem_matches = self.__memoized_matches.get(query, None)
+			if mem_matches:
+				# print('Memoized hit for ', query)
+				return mem_matches
+		else:
 			# Cache clean out
 			print('Cache cleaned out!')
 			self.__memoized_matches = {}
-		else:
-			mem_matches = self.__memoized_matches.get(query, None)
-			if mem_matches:
-				print('Memoized hit for ', query)
-				return mem_matches
 
 		mem_matches = utils.find_matches(query, fuzziness, self.load_index(self.__index_path))
 		self.__last_used_fuzziness = fuzziness

@@ -46,10 +46,14 @@ class Index:
 		if not match_index_list:
 			return not_found
 
+		end_index = key_len - 1
 		for index in match_index_list:
 			possible_match = self.__item_list[index]
-			if possible_match == key:
-				return key, True
+
+			if possible_match[end_index] != key[end_index]: # Last chars don't match!
+				continue
+			elif possible_match == key:
+				return possible_match, True
 
 		return not_found
 

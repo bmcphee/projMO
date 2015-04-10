@@ -12,6 +12,7 @@ import os
 
 from predict import utils, constants
 
+DefaultFuzziness = 55
 IgnoreShortTimeDeltas = False
 
 class Application(Frame):
@@ -94,6 +95,9 @@ class Application(Frame):
 	    themselves in preparation for new predicted words. 
 		"""
 		new_entry = self.entry.get()
+	
+		if not new_entry:
+			return
 
 		'''
 		if IgnoreShortTimeDeltas:
@@ -111,32 +115,23 @@ class Application(Frame):
 
 			self.__prev_entry = new_entry
 		'''
-	
 
-		# If the entry box is non empty it generates suggestions
-		if len(new_entry):
-			suggestions = self.get_matches(new_entry)
-			self.clear_no_matches()
+		# Firstly clear the current entries
+		self.similar_list.delete(0, END)
+		self.similar_rating.delete(0, END)
+
+		suggestions = self.get_matches(new_entry)
+		self.clear_no_matches()
 		
-		# If the entry box is empty it clears the list and doesn't generate suggestions
-		if not len(new_entry):
-			suggestions = {}
-			self.similar_list.delete(0, END)
-			self.similar_rating.delete(0, END)
-			
 		# If there are no matches display an error
 		if not any(suggestions):
 			return self.no_matches()
-
-		# deletes current entries in the lists
-		self.similar_list.delete(0, END)
-		self.similar_rating.delete(0, END)
 				
 		for rating, suggestion in suggestions:
 			self.similar_list.insert(END, suggestion)
-			self.similar_rating.insert(END, str(int(rating * 100)) + '%')
+			self.similar_rating.insert(END, rating)
 	
-	def get_matches(self, query, fuzziness=0.65):
+	def get_matches(self, query, fuzziness=DefaultFuzziness):
 		if fuzziness == self.__last_used_fuzziness:
 			mem_matches = self.__memoized_matches.get(query, None)
 			if mem_matches:

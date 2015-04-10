@@ -2,8 +2,8 @@
 
 DEBUG = False
 penalties = dict(
-    add=-2,
-    delete=-2,
+    add=-1,
+    delete=-1,
     keep=3,
     move=2
 )

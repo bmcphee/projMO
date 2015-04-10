@@ -21,7 +21,7 @@ def parse_float(value):
     try:
         converted = float(value)
     except ValueError:
-        return 0.0, False
+        return constants.DEFAULT_FUZZINESS, False
     else:
         return converted, True
 

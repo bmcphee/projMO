@@ -15,6 +15,14 @@ from predict import utils, constants
 DefaultFuzziness = 55
 IgnoreShortTimeDeltas = False
 
+def parse_float(v):
+	try:
+		parsed = float(v)
+	except:
+		return DefaultFuzziness
+	else:
+		return parsed
+
 class Application(Frame):
 	
 	def __init__(self, master=None):
@@ -22,10 +30,10 @@ class Application(Frame):
 		self.grid()
 		self.createWidgets()
 
-		self.__index_cache 			= {}
-		self.__memoized_matches 	= {}
-		self.__last_used_fuzziness 	= -1
-		self.__index_path  = os.path.join('predict', constants.DEFAULT_DICT_FILE)
+		self.__index_cache          = {}
+		self.__memoized_matches     = {}
+		self.__last_used_fuzziness  = DefaultFuzziness
+		self.__index_path = os.path.join('predict', constants.DEFAULT_DICT_FILE)
 
 		self.__prev_entry = ''
 		self.__prev_tick = self.__cur_tick = 0
@@ -40,21 +48,30 @@ class Application(Frame):
 		
 		# label for Enter Word
 		self.intruction = Label(self, text = "Enter word.")
-		self.intruction.grid(row = 0, column = 0, columnspan = 2, sticky = W)
+		self.intruction.grid(row = 0, column = 0, columnspan = 3, sticky = W)
 
 		# label for Suggested Words
 		self.title_list = Label(self, text = "Suggested Words:")
-		self.title_list.grid(row = 4, column = 0, columnspan = 2, sticky = W)
+		self.title_list.grid(row = 4, column = 0, columnspan = 3, sticky = W)
 
 		# label for Similarity
 		self.title_rating = Label(self, text = "Similarity:")
-		self.title_rating.grid(row = 4, column = 1, columnspan = 2, sticky = W)
+		self.title_rating.grid(row = 4, column = 1, columnspan = 3, sticky = W)
 
 		# entry box
 		self.entry = Entry(self)
-		self.entry.bind('<Key>', self.on_entry_change)
-		self.entry.bind('<KeyRelease>', self.on_entry_change)
-		self.entry.grid(row = 1, column = 0, columnspan = 2, sticky = W)
+		self.entry.bind('<Key>', self.on_match_query)
+		self.entry.bind('<KeyRelease>', self.on_match_query)
+		self.entry.grid(row = 1, column = 0, columnspan = 3, sticky = W)
+
+		self.fuzziness_label = Label(self, text = "Fuzziness:")
+		self.fuzziness_label.grid(row = 0, column = 2, sticky = W)
+
+		self.fuzziness_entry = Entry(self)
+		self.fuzziness_entry.grid(row = 1, column = 2, columnspan=1, sticky = W)
+
+		self.fuzziness_entry.bind('<Key>', self.on_fuzziness_changed)
+		self.fuzziness_entry.bind('<KeyRelease>', self.on_fuzziness_changed)
 
 		# list for similar words
 		self.similar_list = Listbox(self, width = 15, height = 15)
@@ -88,8 +105,24 @@ class Application(Frame):
 		previously.
 		"""
 		self.no_match.grid_remove()
+		
+	def __clear_memoized_cache(self):
+		print('Cache cleaned out!')
+		self.__memoized_matches = {}
 
-	def on_entry_change(self, event):
+	def on_fuzziness_changed(self, event):
+		fuzziness = parse_float(self.fuzziness_entry.get())
+
+		if fuzziness != self.__last_used_fuzziness:
+			self.__clear_memoized_cache()
+
+		# Emit on_match_query
+		return self.__get_matches(fuzziness)
+
+	def on_match_query(self, event):
+		return self.__get_matches(self.__last_used_fuzziness)
+
+	def __get_matches(self, fuzziness):
 		"""
 		When the submit button is pressed the lists clear
 	    themselves in preparation for new predicted words. 
@@ -99,28 +132,11 @@ class Application(Frame):
 		if not new_entry:
 			return
 
-		'''
-		if IgnoreShortTimeDeltas:
-			self.__prev_tick = self.__cur_tick
-			self.__cur_tick  = time.clock()
-
-			time_delta = self.__cur_tick - self.__prev_tick
-
-			print('time_delta', time_delta, self.__prev_tick, self.__cur_tick)
-			if time_delta < 0.04: # TODO: Determine a good difference
-
-				if len(self.__prev_entry) >= len(new_entry): # Backspace not hit
-					self.__prev_entry = new_entry
-					return
-
-			self.__prev_entry = new_entry
-		'''
-
 		# Firstly clear the current entries
 		self.similar_list.delete(0, END)
 		self.similar_rating.delete(0, END)
 
-		suggestions = self.get_matches(new_entry)
+		suggestions = self.get_matches(new_entry, fuzziness)
 		self.clear_no_matches()
 		
 		# If there are no matches display an error
@@ -130,19 +146,18 @@ class Application(Frame):
 		for rating, suggestion in suggestions:
 			self.similar_list.insert(END, suggestion)
 			self.similar_rating.insert(END, rating)
-	
-	def get_matches(self, query, fuzziness=DefaultFuzziness):
-		if fuzziness == self.__last_used_fuzziness:
+
+	def get_matches(self, query, fuzziness):
+		if fuzziness != self.__last_used_fuzziness:
+			self.__clear_memoized_cache()
+		else:
 			mem_matches = self.__memoized_matches.get(query, None)
 			if mem_matches:
 				# print('Memoized hit for ', query)
 				return mem_matches
-		else:
-			# Cache clean out
-			print('Cache cleaned out!')
-			self.__memoized_matches = {}
 
-		mem_matches = utils.find_matches(query, fuzziness, self.load_index(self.__index_path))
+		mem_matches = utils.find_matches(query, fuzziness,
+												self.load_index(self.__index_path))
 		self.__last_used_fuzziness = fuzziness
 
 		self.__memoized_matches[query] = mem_matches

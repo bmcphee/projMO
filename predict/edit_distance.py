@@ -1,11 +1,33 @@
 #!/usr/bin/env python3
 
 DEBUG = False
+
+def add_penalty(seq, *rest):
+    return -1 * len(seq)
+
+def delete_penalty(seq, *rest):
+    return -1 * len(seq)
+
+def move_penalty(seq, *args):
+    max_penalty = 2
+    scale_len = args[0] or 1
+    total_rank = 0
+    for k in seq:
+        src_index, dest_index, *rest = k
+        index_diff = abs(src_index - dest_index)
+        penalty = (max_penalty - max_penalty * (index_diff/scale_len))
+        # print('\033[92m', src_index, dest_index, '\033[00m', index_diff, scale_len, penalty)
+        total_rank += penalty
+    return total_rank
+
+def keep_penalty(seq, *rest):
+    return 3 * len(seq)
+
 penalties = dict(
-    add=-1,
-    delete=-1,
-    keep=3,
-    move=2
+    add=add_penalty,
+    delete=delete_penalty,
+    keep=keep_penalty,
+    move=move_penalty,
 )
 
 def edit_distance(base, subject):
@@ -50,9 +72,10 @@ def edit_distance(base, subject):
 
     rank = 0
 
+    subject_len = len(subject)
     for verb, iterator in grammar.items():
-        penalty = penalties.get(verb, -1)
-        rank += (penalty * len(iterator))
+        penalty_func = penalties.get(verb, None)
+        rank += penalty_func(iterator, subject_len)
 
         if DEBUG: # 
             for it in iterator:

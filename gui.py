@@ -107,7 +107,7 @@ class Application(Frame):
 		self.no_match.grid_remove()
 		
 	def __clear_memoized_cache(self):
-		print('Cache cleaned out!')
+		# print('Cache cleaned out!')
 		self.__memoized_matches = {}
 
 	def on_fuzziness_changed(self, event):
@@ -165,6 +165,7 @@ class Application(Frame):
 	
 def main():
 	root = Tk()
+	root.title('Suggestions')
 	app = Application(master=root)
 	app.mainloop()
 
